@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+            <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RadConsult Portal v7.0 - Admin & Auth Suite</title>
+    <title>RadConsult Portal v7.0 - Clean Build</title>
     <style>
         :root {
             --primary: #0070f3;
@@ -27,8 +27,6 @@
             flex-direction: column;
             min-height: 100vh;
         }
-        
-        /* SECURITY AUTH GATE */
         .auth-container {
             display: flex;
             align-items: center;
@@ -108,9 +106,8 @@
         .alert-success { background: #e5ffe5; color: var(--success); border: 1px solid #ccffcc; }
         .alert-warning { background: #fff5e5; color: var(--warning); border: 1px solid #ffeecc; }
 
-        /* MAIN APP DASHBOARD WRAPPER */
         .app-wrapper {
-            display: none; /* Controlled by JavaScript */
+            display: none;
             flex-direction: column;
             flex: 1;
         }
@@ -143,7 +140,6 @@
             cursor: pointer;
             font-size: 0.85rem;
         }
-        .logout-btn:hover { background: rgba(255,255,255,0.1); }
         .container {
             flex: 1;
             max-width: 1200px;
@@ -195,7 +191,6 @@
             width: 100%;
         }
         
-        /* ADMIN APPROVAL TABLES */
         .approval-table {
             width: 100%;
             border-collapse: collapse;
@@ -234,7 +229,6 @@
         .btn-approve { background: var(--success); }
         .btn-reject { background: var(--error); }
 
-        /* DICOM SHIFT SIMULATOR */
         .dicom-container {
             background: #111;
             border-radius: 6px;
@@ -274,7 +268,6 @@
             accent-color: var(--primary);
         }
 
-        /* LIVE CHAT BOX */
         .chat-workspace {
             display: none;
             background: white;
@@ -340,4 +333,13 @@
             margin-left: 8px;
             border-radius: 4px;
             font-weight: bold;
-        
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="authScreen" class="auth-container">
+        <div class="auth-card">
+            <h2 id="authTitle">Sign In</h2>
+            <p id="authSub">Access the secure RadConsult Network</p>
