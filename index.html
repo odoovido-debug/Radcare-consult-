@@ -1,141 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RadConsult Portal v7.0 - Fixed</title>
-    <style>
-        :root {
-            --primary: #0070f3;
-            --secondary: #001838;
-            --light: #f4f6f9;
-            --dark: #333;
-            --success: #00cc88;
-            --error: #ff3333;
-            --warning: #ffaa00;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background: var(--light); color: var(--dark); display: flex; flex-direction: column; min-height: 100vh; }
-        .auth-container { display: flex; align-items: center; justify-content: center; flex: 1; padding: 1rem; background: linear-gradient(135deg, var(--secondary) 0%, #002c66 100%); }
-        .auth-card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 400px; }
-        .auth-card h2 { text-align: center; margin-bottom: 0.5rem; color: var(--secondary); }
-        .auth-card p { text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; }
-        .form-group { margin-bottom: 1.2rem; }
-        .form-group label { display: block; margin-bottom: 0.4rem; font-weight: 600; font-size: 0.9rem; }
-        .form-group input, .form-group select { width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; outline: none; }
-        .auth-btn { width: 100%; padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 0.5rem; }
-        .auth-toggle { text-align: center; margin-top: 1rem; font-size: 0.85rem; color: #555; }
-        .auth-toggle span { color: var(--primary); cursor: pointer; font-weight: bold; }
-        .alert-box { padding: 0.75rem; border-radius: 4px; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; display: none; }
-        .alert-danger { background: #ffe5e5; color: var(--error); border: 1px solid #ffcccc; }
-        .alert-success { background: #e5ffe5; color: var(--success); border: 1px solid #ccffcc; }
-        .alert-warning { background: #fff5e5; color: var(--warning); border: 1px solid #ffeecc; }
-        
-        .app-wrapper { display: none; flex-direction: column; flex: 1; }
-        header { background: var(--secondary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .logo { font-weight: bold; font-size: 1.4rem; letter-spacing: 1px; }
-        .header-controls { display: flex; align-items: center; gap: 15px; }
-        .logout-btn { background: transparent; border: 1px solid white; color: white; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
-        .container { flex: 1; max-width: 1200px; width: 100%; margin: 1.5rem auto; padding: 0 1rem; }
-        .portal-section { display: none; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
-        .portal-section.active { display: block; }
-        h2.section-title { color: var(--secondary); margin-bottom: 1.5rem; border-bottom: 2px solid var(--light); padding-bottom: 0.5rem; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-        .card { background: var(--light); padding: 1.5rem; border-radius: 6px; border-left: 4px solid var(--primary); }
-        .card h3 { margin-bottom: 0.5rem; color: var(--secondary); }
-        button.action-btn { background: var(--primary); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 1rem; width: 100%; }
-        
-        .approval-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        .approval-table th, .approval-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #ddd; }
-        .approval-table th { background: var(--secondary); color: white; }
-        .badge { padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-        .badge-pending { background: #fff0cc; color: var(--warning); }
-        .badge-approved { background: #ccffeb; color: var(--success); }
-        .btn-group { display: flex; gap: 5px; }
-        .btn-small { padding: 0.3rem 0.6rem; border: none; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; color: white; }
-        .btn-approve { background: var(--success); }
-        .btn-reject { background: var(--error); }
-        
-        .dicom-container { background: #111; border-radius: 6px; padding: 10px; margin-top: 10px; text-align: center; }
-        .dicom-canvas-wrapper { width: 100%; height: 180px; background: #000; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
-        .xray-svg { width: 120px; height: 120px; fill: #fff; transition: filter 0.1s ease; }
-        .dicom-controls { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
-        .dicom-controls label { color: #aaa; font-size: 0.8rem; display: flex; justify-content: space-between; }
-        .dicom-controls input[type="range"] { width: 100%; accent-color: var(--primary); }
-        
-        .chat-workspace { display: none; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 1.5rem; border: 1px solid #ddd; }
-        .chat-header { background: var(--primary); color: white; padding: 1rem; border-top-left-radius: 8px; border-top-right-radius: 8px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .close-chat-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
-        .chat-messages { height: 200px; overflow-y: auto; padding: 1rem; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; }
-        .message { max-width: 75%; padding: 0.6rem 0.8rem; border-radius: 6px; font-size: 0.9rem; }
-        .message.incoming { background: #e2e8f0; color: #333; align-self: flex-start; }
-        .message.outgoing { background: var(--primary); color: white; align-self: flex-end; }
-        .chat-input-area { display: flex; padding: 0.75rem; border-top: 1px solid #eee; }
-        .chat-input-area input { flex: 1; padding: 0.5rem 0.75rem; border: 1px solid #ccc; border-radius: 4px; outline: none; }
-        .chat-input-area button { background: var(--success); color: white; border: none; padding: 0 1rem; margin-left: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sign In</title>
+<style>
+  /* Basic styling for the form */
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .sign-in-container {
+    background: #fff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    width: 300px;
+  }
+
+  h2 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  input {
+    width: 100%;
+    padding: 12px 15px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    background-color: #4CAF50;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #45a049;
+  }
+
+  .message {
+    margin-top: 15px;
+    text-align: center;
+    color: red;
+  }
+</style>
 </head>
 <body>
 
-    <!-- AUTH GATE PANEL -->
-    <div id="authScreen" class="auth-container">
-        <div class="auth-card">
-            <h2 id="authTitle">Sign In</h2>
-            <p id="authSub">Access the secure RadConsult Network</p>
-            <div id="authAlert" class="alert-box alert-danger"></div>
-            <form id="authForm" onsubmit="handleAuthSubmit(event)">
-                <div class="form-group" id="roleGroup">
-                    <label for="userRole">Account Profile Type:</label>
-                    <select id="userRole">
-                        <option value="radiographer">Radiographer (Requires Admin Sign-off)</option>
-                        <option value="student">Medical Student</option>
-                        <option value="patient">Patient Client</option>
-                        <option value="admin">System Administrator</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="email">Registered Email</label>
-                    <input type="email" id="email" required placeholder="user@radconsult.com">
-                </div>
-                <div class="form-group">
-                    <label for="password">Security Password</label>
-                    <input type="password" id="password" required placeholder="••••••••">
-                </div>
-                <button type="submit" class="auth-btn" id="submitBtn">Sign In</button>
-            </form>
-            <div class="auth-toggle">
-                <span id="toggleText" onclick="toggleAuthMode()">New to the platform? Create an account</span>
-            </div>
-        </div>
-    </div>
+<div class="sign-in-container">
+  <h2>Sign In</h2>
+  <input type="email" id="email" placeholder="Enter your email" required />
+  <input type="password" id="password" placeholder="Enter your password" required />
+  <button id="signInBtn">Sign In</button>
+  <div class="message" id="message"></div>
+</div>
 
-    <!-- MAIN APP SCREEN DESKS -->
-    <div id="appWrapper" class="app-wrapper">
-        <header>
-            <div class="logo">☢️ RadConsult v7.0</div>
-            <div class="header-controls">
-                <span id="userBadge" style="font-weight: bold; font-size: 0.9rem;"></span>
-                <button class="logout-btn" onclick="handleLogout()">Secure Logout</button>
-            </div>
-        </header>
-        
-        <div class="container">
-            <!-- 1. ADMIN QUEUE -->
-            <section id="adminPortal" class="portal-section">
-                <h2 class="section-title">System Administration & Control</h2>
-                <div style="margin-bottom: 2rem;" class="card">
-                    <h3>Pending Staff Verification Queue</h3>
-                    <p style="margin-bottom: 1rem; color: #666; font-size: 0.9rem;">Review credentials before approving system access.</p>
-                    <table class="approval-table">
-                        <thead><tr><th>Applicant Email</th><th>Profile</th><th>Status</th><th>Actions</th></tr></thead>
-                        <tbody id="approvalQueueTable"></tbody>
-                    </table>
-                </div>
-            </section>
+<script>
+  // Your Firebase configuration
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
 
-            <!-- 2. RADIOGRAPHER CONSOLE -->
-            <section id="radiographerPortal" class="portal-section">
-                <h2 class="section-title">Radiographer Dashboard</h2>
-                <div class="grid">
-                    <div class="card">
-                        <h3>Active Consultations</h3>
+  // Initialize Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js";
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth();
+
+  const signInBtn = document.getElementById('signInBtn');
+  const messageDiv = document.getElementById('message');
+
+  signInBtn.addEventListener('click', () => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    // Clear previous message
+    messageDiv.textContent = '';
+
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        // Signed in
+        const user = userCredential.user;
+        messageDiv.style.color = 'green';
+        messageDiv.textContent = 'Sign-in successful! Welcome, ' + user.email;
+        // Redirect or perform other actions here
+      })
+      .catch((error) => {
+        messageDiv.style.color = 'red';
+        messageDiv.textContent = error.message;
+      });
+  });
+</script>
+
+</body>
+</html>
