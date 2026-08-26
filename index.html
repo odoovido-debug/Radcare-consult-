@@ -68,7 +68,7 @@
   <div class="message" id="message"></div>
 </div>
 
-<script>
+<script type="module">
   // Your Firebase configuration
   const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
@@ -79,35 +79,56 @@
     appId: "YOUR_APP_ID"
   };
 
-  // Initialize Firebase
+  // Import Firebase modules
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-firestore.js";
 
+  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth();
+  const db = getFirestore();
 
   const signInBtn = document.getElementById('signInBtn');
   const messageDiv = document.getElementById('message');
 
-  signInBtn.addEventListener('click', () => {
+  signInBtn.addEventListener('click', async () => {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
     // Clear previous message
     messageDiv.textContent = '';
 
-    signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        // Signed in
-        const user = userCredential.user;
-        messageDiv.style.color = 'green';
-        messageDiv.textContent = 'Sign-in successful! Welcome, ' + user.email;
-        // Redirect or perform other actions here
-      })
-      .catch((error) => {
-        messageDiv.style.color = 'red';
-        messageDiv.textContent = error.message;
-      });
+    try {
+      // Sign in user
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Fetch user role from Firestore
+      const userDocRef = doc(db, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        const role = userData.role;
+
+        // Redirect based on role
+        if (role === "admin") {
+          window.location.href = "/adminPage.html"; // Update with your admin page URL
+        } else if (role === "doctor") {
+          window.location.href = "/doctorPage.html"; // Update with your doctor page URL
+        } else if (role === "patient") {
+          window.location.href = "/patientPage.html"; // Update with your patient page URL
+        } else {
+          messageDiv.textContent = "User role not recognized.";
+        }
+      } else {
+        messageDiv.textContent = "User data not found.";
+      }
+    } catch (error) {
+      messageDiv.style.color = 'red';
+      messageDiv.textContent = error.message;
+    }
   });
 </script>
 
