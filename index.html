@@ -66,3 +66,296 @@
         if (passField) passField.value = '';
     }
 </script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RadConsult Portal v6.0 - Advanced Workspace</title>
+    <style>
+        :root {
+            --primary: #0070f3;
+            --secondary: #001838;
+            --light: #f4f6f9;
+            --dark: #333;
+            --success: #00cc88;
+            --error: #ff3333;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: var(--light);
+            color: var(--dark);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            background: var(--secondary);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-weight: bold;
+            font-size: 1.4rem;
+            letter-spacing: 1px;
+        }
+        select.view-picker {
+            padding: 0.4rem;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .container {
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+        }
+        .portal-section {
+            display: none;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+        }
+        .portal-section.active {
+            display: block;
+        }
+        h2.section-title {
+            color: var(--secondary);
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 0.5rem;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .card {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary);
+        }
+        .card h3 {
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+        button.action-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 1rem;
+            width: 100%;
+        }
+        
+        /* ADVANCED DICOM SIMULATOR MODULE */
+        .dicom-container {
+            background: #111;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        .dicom-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+        .xray-svg {
+            width: 140px;
+            height: 140px;
+            fill: #fff;
+            transition: filter 0.1s ease;
+        }
+        .dicom-controls {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .dicom-controls label {
+            color: #aaa;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        .dicom-controls input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary);
+        }
+
+        /* LIVE CONSULTATION CHAT WORKSPACE */
+        .chat-workspace {
+            display: none;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-top: 1.5rem;
+            border: 1px solid #ddd;
+        }
+        .chat-header {
+            background: var(--primary);
+            color: white;
+            padding: 1rem;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .close-chat-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .chat-messages {
+            height: 250px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .message {
+            max-width: 75%;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        .message.incoming {
+            background: #e2e8f0;
+            color: #333;
+            align-self: flex-start;
+        }
+        .message.outgoing {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+        }
+        .chat-input-area {
+            display: flex;
+            padding: 0.75rem;
+            border-top: 1px solid #eee;
+            background: white;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+        }
+        .chat-input-area button {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 0 1rem;
+            margin-left: 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- APPLICATION TOOLBAR HEADER -->
+    <header>
+        <div class="logo">☢️ RadConsult v6.0</div>
+        <div>
+            <label style="color:white; font-size:0.85rem; margin-right:5px;" for="viewPicker">Switch View:</label>
+            <select id="viewPicker" class="view-picker">
+                <option value="radiographer">Radiographer Portal</option>
+                <option value="student">Student Dashboard</option>
+            </select>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- MODULE PANEL 1: RADIOGRAPHER BOARD -->
+        <section id="radiographer" class="portal-section active">
+            <h2 class="section-title">Radiographer Dashboard</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Incoming Consultations</h3>
+                    <p>Patient: John Doe (Urgent Chest X-Ray)</p>
+                    
+                    <!-- Interactive Windowing Tool Component -->
+                    <div class="dicom-container">
+                        <div class="dicom-canvas-wrapper">
+                            <!-- Inlined clean medical schematic vector drawing for filter rendering -->
+                            <svg class="xray-svg" id="dicomImage" viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm0-4h-2V7h2v8zM12 9c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
+                                <path d="M4 12c0-4.41 3.59-8 8-8s8 3.59 8 8-3.59 8-8 8-8-3.59-8-8zm9-5h-2v4H7v2h4v4h2v-4h4v-2h-4V7z"/>
+                            </svg>
+                        </div>
+                        <div class="dicom-controls">
+                            <label>Window Level (Brightness) <span id="brightVal">100%</span></label>
+                            <input type="range" id="brightnessRange" min="30" max="200" value="100">
+                            
+                            <label>Window Width (Contrast) <span id="contrastVal">100%</span></label>
+                            <input type="range" id="contrastRange" min="50" max="250" value="100">
+                        </div>
+                    </div>
+                    
+                    <button class="action-btn" onclick="openConsultationChat()">Launch Consultation Workspace</button>
+                </div>
+
+                <div class="card">
+                    <h3>Student Peer Reviews</h3>
+                    <p>2 pathology case submissions awaiting your clinical sign-off.</p>
+                    <button class="action-btn" style="background:#555;" onclick="alert('Loading review logs...')">Review Cases</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- MODULE PANEL 2: STUDENT BOARD -->
+        <section id="student" class="portal-section">
+            <h2 class="section-title">Student Learning Center</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Anatomy & Pathology Quiz</h3>
+                    <p>Test your knowledge on localized CT scan anomalies.</p>
+                    <button class="action-btn" onclick="alert('Starting interactive quiz matrix...')">Start Quiz</button>
+                </div>
+                <div class="card">
+                    <h3>Submit Case for Review</h3>
+                    <p>Upload your anonymized image study to get feedback from senior radiographers.</p>
+                    <button class="action-btn" style="background:#555;" onclick="alert('File browser requested...')">Upload Study</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- EXPANDABLE LIVE CONSULTATION WORKSPACE CONTAINER -->
+        <div id="chatWorkspace" class="chat-workspace">
