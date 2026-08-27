@@ -1,136 +1,86 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Sign In</title>
-<style>
-  /* Basic styling for the form */
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f2f5;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
+const express = require("express");
+const helmet = require("helmet");
+const cookieParser = require("cookie-parser");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const Database = require("better-sqlite3");
+const multer = require("multer");
+const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 
-  .sign-in-container {
-    background: #fff;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    width: 300px;
-  }
+const app = express();
+const PORT = Number(process.env.PORT || 3000);
+const JWT_SECRET = process.env.JWT_SECRET || "SUPER_SECRET_CHANGE_ME";
+const db = new Database("radcare.db");
 
-  h2 {
-    text-align: center;
-    margin-bottom: 20px;
-  }
+// Middleware
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(express.json({ limit: "2mb" }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, "public")));
 
-  input {
-    width: 100%;
-    padding: 12px 15px;
-    margin: 8px 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
+const uploadDir = path.join(__dirname, "private_uploads");
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
-  button {
-    width: 100%;
-    padding: 12px;
-    background-color: #4CAF50;
-    border: none;
-    border-radius: 4px;
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-  }
+// Helpers
+const now = () => new Date().toISOString();
+const id = () => crypto.randomUUID();
+const publicUser = (u) => ({ id: u.id, name: u.name, email: u.email, role: u.role, status: u.status });
 
-  button:hover {
-    background-color: #45a049;
-  }
+// Database Initialization
+db.exec(`
+    CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, name TEXT, email TEXT UNIQUE, password_hash TEXT, country TEXT, role TEXT, status TEXT, created_at TEXT);
+    CREATE TABLE IF NOT EXISTS patient_profiles (id TEXT PRIMARY KEY, user_id TEXT UNIQUE, phone TEXT, date_of_birth TEXT, emergency_contact TEXT, created_at TEXT);
+    -- Add other tables here...
+`);
 
-  .message {
-    margin-top: 15px;
-    text-align: center;
-    color: red;
-  }
-</style>
-</head>
-<body>
-
-<div class="sign-in-container">
-  <h2>Sign In</h2>
-  <input type="email" id="email" placeholder="Enter your email" required />
-  <input type="password" id="password" placeholder="Enter your password" required />
-  <button id="signInBtn">Sign In</button>
-  <div class="message" id="message"></div>
-</div>
-
-<script type="module">
-  // Your Firebase configuration
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-
-  // Import Firebase modules
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-firestore.js";
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth();
-  const db = getFirestore();
-
-  const signInBtn = document.getElementById('signInBtn');
-  const messageDiv = document.getElementById('message');
-
-  signInBtn.addEventListener('click', async () => {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
-    // Clear previous message
-    messageDiv.textContent = '';
-
+// Auth Middleware
+function auth(req, res, next) {
+    const token = req.cookies.radcare_token;
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
     try {
-      // Sign in user
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.user = db.prepare("SELECT * FROM users WHERE id=?").get(decoded.sub);
+        next();
+    } catch { res.status(401).json({ error: "Invalid token" }); }
+}
 
-      // Fetch user role from Firestore
-      const userDocRef = doc(db, "users", user.uid);
-      const userDocSnap = await getDoc(userDocRef);
+// --- ROUTES ---
 
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        const role = userData.role;
+app.post("/api/auth/register", async (req, res) => {
+    const { name, email, password, country, role } = req.body;
+    const hash = await bcrypt.hash(password, 12);
+    try {
+        db.prepare("INSERT INTO users VALUES (?,?,?,?,?,?,?,?)")
+          .run(id(), name, email.toLowerCase(), hash, country, role, role === "patient" ? "approved" : "pending", now());
+        res.status(201).json({ message: "Registered" });
+    } catch { res.status(400).json({ error: "Registration failed" }); }
+});
 
-        // Redirect based on role
-        if (role === "admin") {
-          window.location.href = "/adminPage.html"; // Update with your admin page URL
-        } else if (role === "doctor") {
-          window.location.href = "/doctorPage.html"; // Update with your doctor page URL
-        } else if (role === "patient") {
-          window.location.href = "/patientPage.html"; // Update with your patient page URL
-        } else {
-          messageDiv.textContent = "User role not recognized.";
-        }
-      } else {
-        messageDiv.textContent = "User data not found.";
-      }
-    } catch (error) {
-      messageDiv.style.color = 'red';
-      messageDiv.textContent = error.message;
+app.post("/api/auth/login", async (req, res) => {
+    const { email, password } = req.body;
+    const user = db.prepare("SELECT * FROM users WHERE email=?").get(email.toLowerCase());
+    if (user && await bcrypt.compare(password, user.password_hash)) {
+        const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: "8h" });
+        res.cookie("radcare_token", token, { httpOnly: true, secure: process.env.NODE_ENV === "production" });
+        res.json({ user: publicUser(user) });
+    } else res.status(401).json({ error: "Invalid credentials" });
+});
+
+// Profile Update Route (Fixed)
+app.put("/api/patient/profile", auth, (req, res) => {
+    const { phone, dateOfBirth, emergencyContact } = req.body;
+    const existing = db.prepare("SELECT id FROM patient_profiles WHERE user_id=?").get(req.user.id);
+    
+    if (existing) {
+        db.prepare("UPDATE patient_profiles SET phone=?, date_of_birth=?, emergency_contact=? WHERE user_id=?")
+          .run(phone, dateOfBirth, emergencyContact, req.user.id);
+    } else {
+        db.prepare("INSERT INTO patient_profiles VALUES (?,?,?,?,?,?)")
+          .run(id(), req.user.id, phone, dateOfBirth, emergencyContact, now());
     }
-  });
-</script>
+    res.json({ ok: true });
+});
 
-</body>
-</html>
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
